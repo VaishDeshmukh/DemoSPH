@@ -1,0 +1,3 @@
+${PODS_ROOT}/Target Support Files/Pods-DemoSPHUITests/Pods-DemoSPHUITests-frameworks.sh
+${BUILT_PRODUCTS_DIR}/Alamofire/Alamofire.framework
+${BUILT_PRODUCTS_DIR}/Gloss/Gloss.framework
