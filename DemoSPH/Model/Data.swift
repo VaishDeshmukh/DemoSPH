@@ -10,7 +10,7 @@ import Foundation
 import Gloss
 
 struct Data: Glossy {
-    var volume_of_mobile_data: Double!
+    var volume_of_mobile_data: String!
     var quarter: String!
     var _id: Int!
     
@@ -43,7 +43,8 @@ extension Data {
             switch response.result {
             case .success(let data):
                 if let JSON = data as? [String: AnyObject] {
-                    let records = JSON.valueForKeyPath(keyPath: "records")
+                    let result = JSON.valueForKeyPath(keyPath: "result") as? [String: AnyObject]
+                    let records = result?.valueForKeyPath(keyPath: "records")
                     if let JSONArray: Array = records as? Array<[String: AnyObject]> {
                         let dataObject = [Data].from(jsonArray: JSONArray)
                         if dataObject != nil {
@@ -54,6 +55,7 @@ extension Data {
                     } else {
                         completion(nil, "Failed to parse JSON while conversion" as? Error)
                     }
+                    
                 }
             case .failure(let error):
                 completion(nil, error)

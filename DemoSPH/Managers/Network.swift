@@ -65,10 +65,6 @@ class Network {
     
     func request(endpoint: Network.Endpoints, completion: @escaping (DataResponse<Any>) -> Void) {
         
-        DispatchQueue.main.sync {
-            UIApplication.shared.isNetworkActivityIndicatorVisible = true
-        }
-        
         print("Sending request to server")
         print("Endpoints: \(endpoint)")
         print("HttpMethod: \(endpoint.method)")
