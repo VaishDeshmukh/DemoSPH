@@ -10,6 +10,7 @@ import UIKit
 
 class MainTVC: UITableViewController {
     
+    //MARK:- Enumerations
     enum Screen {
         enum dataCell: String {
             case identifier = "data-cell"
@@ -23,23 +24,27 @@ class MainTVC: UITableViewController {
         }
     }
     
-    
+    //MARK: - Properties
+
     fileprivate lazy var data = {
         return [Data]()
     }()
-    
     var expectedDict = [String : Any]()
     var yearQuarter = [String : [String : String]]()
     var sortedData = [(key: String, value: [String : String])]()
     var isValueDecreased = false
     var selectedIndexPath = [IndexPath]() // keep track of indexpath
-
+    
+    //MARK:- View Lifecycle
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         registerComponents()
         fetchData()
     }
+    
+    //MARK:- Actions
     
     @IBAction func didPullToRefresh(_ sender: UIRefreshControl) {
         
@@ -48,6 +53,7 @@ class MainTVC: UITableViewController {
     }
     
     // MARK: - Private
+    
     fileprivate func registerComponents() {
         let cell = UINib(nibName: Screen.dataCell.module.rawValue, bundle: Bundle.main)
         tableView.register(cell, forCellReuseIdentifier: Screen.dataCell.identifier.rawValue)
@@ -86,7 +92,7 @@ class MainTVC: UITableViewController {
             
             isValueDecreased = false // set flag to check if there is decrease in the consumption in any quarter
             
-            for (key, value) in sortedConsumption.enumerated() {
+            for (_, value) in sortedConsumption.enumerated() {
                 let newValue = Double(value.value)
                 
                 if let newValue = newValue {
@@ -94,8 +100,6 @@ class MainTVC: UITableViewController {
                     if isValueDecreased != true {
                         if newValue < previousQuarterValue {
                             selectedIndexPath.append(indexPath)
-
-                            print("Decrease in value for: \(mobileConsumption.key) Q\(key)")
                             isValueDecreased = true
                         }
                     }
@@ -129,7 +133,6 @@ class MainTVC: UITableViewController {
             let year = self.sortedData[indexPath.row].key
             vc.yearQuarterData = quarters
             vc.year = year
-            
             self.navigationController?.pushViewController(vc, animated: true)
         }
     }

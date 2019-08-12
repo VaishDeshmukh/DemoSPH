@@ -23,8 +23,8 @@ class DetailTVC: UITableViewController {
     var year = String()
     var yearQuarterData = [String : String]()
     var isValueDecreased = false
-    var selectedIndexPath = [IndexPath]() // keep track of indexpath
-
+    var selectedRow = Int()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         registerComponents()
@@ -60,7 +60,7 @@ class DetailTVC: UITableViewController {
         switch indexPath.section {
         case 0:
             let cell = tableView.dequeueReusableCell(withIdentifier: Screen.basicCell.identifier.rawValue, for: indexPath)
-            cell.textLabel?.text = "Mobile data consumption decreased for second quarter."
+            cell.textLabel?.text = "Mobile data consumption decreased for the following quarter"
             
             return cell
         case 1:
@@ -70,7 +70,7 @@ class DetailTVC: UITableViewController {
             var doubleValue :Double = 0.0
             var previousQuarterValue = 0.0
             
-            for (_ , value) in dataConsumption.enumerated() {
+            for (key , value) in dataConsumption.enumerated() {
                 let newValue = Double(value.value)
                 
                 if let newValue = newValue {
@@ -78,18 +78,20 @@ class DetailTVC: UITableViewController {
                     if isValueDecreased != true {
                         if newValue < previousQuarterValue {
                             isValueDecreased = true
-                            
-                            print(indexPath.row)
+                            self.selectedRow = key
                         }
                     }
                     previousQuarterValue = newValue
                 }
-
             }
             
             let volume = Double(dataConsumption[indexPath.row].value)
             cell.titleText.text = dataConsumption[indexPath.row].key
             cell.detailText.text = String(format: "%.5f", volume ?? 0.0)
+            
+            if indexPath.row == selectedRow {
+                cell.backgroundColor = .lightGray
+            }
             
             return cell
         default:
@@ -97,12 +99,6 @@ class DetailTVC: UITableViewController {
             cell.textLabel?.text = ""
             
             return cell
-        }
-    }
-    
-    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if selectedIndexPath.contains(indexPath) {
-            cell.backgroundColor = .lightGray
         }
     }
 }
