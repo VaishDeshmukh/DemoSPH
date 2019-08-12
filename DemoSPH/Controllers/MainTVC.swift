@@ -41,6 +41,12 @@ class MainTVC: UITableViewController {
         fetchData()
     }
     
+    @IBAction func didPullToRefresh(_ sender: UIRefreshControl) {
+        
+        fetchData()
+        sender.endRefreshing()
+    }
+    
     // MARK: - Private
     fileprivate func registerComponents() {
         let cell = UINib(nibName: Screen.dataCell.module.rawValue, bundle: Bundle.main)
@@ -90,7 +96,6 @@ class MainTVC: UITableViewController {
                             selectedIndexPath.append(indexPath)
 
                             print("Decrease in value for: \(mobileConsumption.key) Q\(key)")
-                            cell.backgroundColor = .lightGray
                             isValueDecreased = true
                         }
                     }
@@ -109,13 +114,21 @@ class MainTVC: UITableViewController {
         }
     }
     
+    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        if selectedIndexPath.contains(indexPath) {
+            cell.backgroundColor = .lightGray
+        }
+    }
+    
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
 
         if selectedIndexPath.contains(indexPath) {
+            
             let vc = self.storyboard?.instantiateViewController(withIdentifier: Screen.controllers.detail.rawValue) as! DetailTVC
-            //            let cell = tableView.cellForRow(at: indexPath) as! DataCell
-            let data = self.sortedData[indexPath.row]
-            vc.detailData = [data]
+            let quarters = self.sortedData[indexPath.row].value
+            let year = self.sortedData[indexPath.row].key
+            vc.yearQuarterData = quarters
+            vc.year = year
             
             self.navigationController?.pushViewController(vc, animated: true)
         }
@@ -142,6 +155,14 @@ extension MainTVC {
         Data.fetchData(data: paylaod) {data, error in
             
             if error != nil {
+                let alert = UIAlertController(title: Constants.errorTitle,
+                                              message: Constants.errorMessage,
+                                              preferredStyle: .alert)
+                
+                alert.addAction(UIAlertAction(title: "Ok", style: .cancel, handler: nil))
+
+                self.present(alert, animated: true)
+
                 print(error as Any)
             } else {
                 self.data = data!
