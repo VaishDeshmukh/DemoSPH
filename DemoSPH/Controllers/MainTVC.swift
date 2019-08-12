@@ -9,7 +9,21 @@
 import UIKit
 
 class MainTVC: UITableViewController {
-
+    
+    enum Screen {
+        enum dataCell: String {
+            case identifier = "data-cell"
+            case module = "DataCell"
+        }
+        enum basicCell: String {
+            case identifier = "basic-cell"
+        }
+        enum controllers: String {
+            case detail = "DetailTVC"
+        }
+    }
+    
+    
     fileprivate lazy var data = {
         return [Data]()
     }()
@@ -17,51 +31,101 @@ class MainTVC: UITableViewController {
     var expectedDict = [String : Any]()
     var yearQuarter = [String : [String : String]]()
     var sortedData = [(key: String, value: [String : String])]()
-    
+    var isValueDecreased = false
+    var selectedIndexPath = [IndexPath]() // keep track of indexpath
+
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        registerComponents()
         fetchData()
     }
     
+    // MARK: - Private
+    fileprivate func registerComponents() {
+        let cell = UINib(nibName: Screen.dataCell.module.rawValue, bundle: Bundle.main)
+        tableView.register(cell, forCellReuseIdentifier: Screen.dataCell.identifier.rawValue)
+    }
+    
     // MARK: - Table view data source
-
+    
     override func numberOfSections(in tableView: UITableView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
+        return 2
+    }
+    
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if section == 1 {
+            return yearQuarter.count
+        }
         return 1
     }
-
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of rows
-        return yearQuarter.count
-    }
-
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
-        let mobileConsumption = self.sortedData[indexPath.row]
-        /*if let year = year {
-            let Q1 = Double((year.valueForKeyPath(keyPath: "Q1") as? String)!) ?? 0.0
-            let Q2 = Double((year.valueForKeyPath(keyPath: "Q2") as? String)!) ?? 0.0
-            let Q3 = Double((year.valueForKeyPath(keyPath: "Q3") as? String)!) ?? 0.0
-            let Q4 = Double((year.valueForKeyPath(keyPath: "Q4") as? String)!) ?? 0.0
+        
+        
+        switch indexPath.section {
+        case 0:
+            let cell = tableView.dequeueReusableCell(withIdentifier: Screen.basicCell.identifier.rawValue, for: indexPath)
+            cell.textLabel?.text = Constants.introduction
             
-            let totalVal = Q1 + Q2 + Q3 + Q4
-            print(totalVal)
-        }*/
-        var doubleValue :Double = 0.0
-
-        for (_, value) in mobileConsumption.value.enumerated()
-            {
+            return cell
+        case 1:
+            
+            let cell = tableView.dequeueReusableCell(withIdentifier: Screen.dataCell.identifier.rawValue, for: indexPath) as! DataCell
+            
+            var doubleValue :Double = 0.0
+            var previousQuarterValue = 0.0
+            let mobileConsumption = self.sortedData[indexPath.row]
+            let sortedConsumption = mobileConsumption.value.sorted { $0.0 < $1.0 }
+            
+            isValueDecreased = false // set flag to check if there is decrease in the consumption in any quarter
+            
+            for (key, value) in sortedConsumption.enumerated() {
                 let newValue = Double(value.value)
+                
                 if let newValue = newValue {
                     doubleValue = doubleValue + newValue
+                    if isValueDecreased != true {
+                        if newValue < previousQuarterValue {
+                            selectedIndexPath.append(indexPath)
+
+                            print("Decrease in value for: \(mobileConsumption.key) Q\(key)")
+                            cell.backgroundColor = .lightGray
+                            isValueDecreased = true
+                        }
+                    }
+                    previousQuarterValue = newValue
                 }
             }
-        
-        
-        cell.textLabel?.text = self.sortedData[indexPath.row].key
-        cell.detailTextLabel?.text = String(doubleValue)
-        
-        return cell
+            cell.titleText.text = self.sortedData[indexPath.row].key
+            cell.detailText.text = String(format: "%.5f", doubleValue)
+            
+            return cell
+        default:
+            let cell = tableView.dequeueReusableCell(withIdentifier: Screen.basicCell.identifier.rawValue, for: indexPath)
+            cell.textLabel?.text = ""
+            
+            return cell
+        }
+    }
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+
+        if selectedIndexPath.contains(indexPath) {
+            let vc = self.storyboard?.instantiateViewController(withIdentifier: Screen.controllers.detail.rawValue) as! DetailTVC
+            //            let cell = tableView.cellForRow(at: indexPath) as! DataCell
+            let data = self.sortedData[indexPath.row]
+            vc.detailData = [data]
+            
+            self.navigationController?.pushViewController(vc, animated: true)
+        }
+    }
+    
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        if section == 1 {
+            return Constants.headerTitle
+        }
+        return ""
     }
 }
 
@@ -73,7 +137,7 @@ extension MainTVC {
         let paylaod = [
             "resource_id": Constants.resourceId,
             "limit": Constants.limit
-        ] as [String: Any]
+            ] as [String: Any]
         
         Data.fetchData(data: paylaod) {data, error in
             
@@ -81,7 +145,7 @@ extension MainTVC {
                 print(error as Any)
             } else {
                 self.data = data!
-
+                
                 var expectInnerDict = [String : String]()
                 if let data = data {
                     for i in 0..<data.count{
@@ -89,38 +153,39 @@ extension MainTVC {
                         //print(data[i].quarter + " : " + data[i].volume_of_mobile_data)
                         let temp = data[i].quarter.split(separator: "-")
                         expectInnerDict.updateValue(data[i].volume_of_mobile_data, forKey: data[i].quarter)
-                
-//                        yearQuarter.updateValue(String(temp[1]), forKey: String(temp[0]))
+                        
+                        //                        yearQuarter.updateValue(String(temp[1]), forKey: String(temp[0]))
                         
                         //yearQuarter[String(temp[0])] = [String(temp[1])]
                         /*
-                        if ((yearQuarter[String(temp[0])]) != nil)
-                        {
-                            print("Already Exists")
-                            yearQuarter[String(temp[0])]?.append(String(temp[1]))
-                            
-                        }
-                        else
-                        {
-                            yearQuarter[String(temp[0])] = [String(temp[1])]
-                            print(yearQuarter)
-                        }
-                        */
+                         if ((yearQuarter[String(temp[0])]) != nil)
+                         {
+                         print("Already Exists")
+                         yearQuarter[String(temp[0])]?.append(String(temp[1]))
+                         
+                         }
+                         else
+                         {
+                         yearQuarter[String(temp[0])] = [String(temp[1])]
+                         print(yearQuarter)
+                         }
+                         */
                         if ((self.yearQuarter[String(temp[0])]) != nil)
                         {
-                            //yearQuarter["String(temp[0])"]?[String(temp(1))] = data[i].volume_of_mobile_data
+                            //add data to the existing key :- adding either Q1,Q2,Q3 or Q4 to already created year component
                             self.yearQuarter[String(temp[0])]?[String(temp[1])] = data[i].volume_of_mobile_data
                         }
                         else
                         {
+                            // create new key with year value.
                             self.yearQuarter[String(temp[0])] = [String(temp[1]) : data[i].volume_of_mobile_data]
                         }
                     }
                     self.sortedData = self.yearQuarter.sorted { $0.0 < $1.0 }
                     print(self.sortedData)
                 }
-//                print(expectInnerDict)
-//                print(self.yearQuarter)
+                //                print(expectInnerDict)
+                //                print(self.yearQuarter)
                 
                 DispatchQueue.main.async {
                     self.tableView.reloadData()
