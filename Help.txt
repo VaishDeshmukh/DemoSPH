@@ -1,0 +1,10 @@
+DemoSPH app shows the following implementations:
+ * The app has an AppIcon
+ * The app launches with a splash screen
+ * The first screen shows a grouped tableview with 2 sections:
+ 	- 1st section: Has a label which shows the information of the data displayed
+ 	- 2nd section: Lists the data consumption done in a year for all quarters.
+ * The app shows the cells as highlighted only if there is an encounter of decrease in value for any quaarter.
+ * Only those cells which show a decrease in value are selectable
+ * On selection it leads to another screen where a table highlights the quarter for decreased volume data.
+ 
